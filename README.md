@@ -18,11 +18,32 @@ This Turborepo includes the following packages/apps:
 
 - `docs`: a [Next.js](https://nextjs.org/) app
 - `web`: another [Next.js](https://nextjs.org/) app
+- `api`: a Bun-based API application
+- `@repo/db`: Prisma-based database package with PostgreSQL
 - `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
 - `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
 - `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+## Database Setup
+
+This project uses PostgreSQL with Prisma ORM. You can run the database locally using Docker:
+
+**1. Start the PostgreSQL container:**
+```bash
+docker compose up -d
+```
+
+**2. Push the Prisma schema to the database:**
+```bash
+cd packages/db
+bunx prisma db push
+```
+
+**3. (Optional) Open Prisma Studio to view/edit data:**
+```bash
+cd packages/db
+bunx prisma studio
+```
 
 ### Utilities
 
