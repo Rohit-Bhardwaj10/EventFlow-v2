@@ -43,6 +43,7 @@ export const optionalAuthMiddleware = async (c: Context, next: Next) => {
 
     await next();
   } catch (error) {
+    console.error("Auth middleware error:", error);
     // Continue without auth
     await next();
   }

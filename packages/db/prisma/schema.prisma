@@ -19,8 +19,11 @@ model User {
   sessions Session[]
   accounts Account[]
 
-  // Your custom fields
-  posts Post[]
+  // Event Management Relations
+  organizedEvents Event[]        @relation("OrganizedEvents")
+  registrations   Registration[]
+  reviews         Review[]
+  favorites       Favorite[]
 }
 
 model Session {
@@ -63,11 +66,201 @@ model Verification {
   updatedAt  DateTime
 }
 
-model Post {
-  id        Int     @id @default(autoincrement())
-  title     String
-  content   String?
-  published Boolean @default(false)
-  authorId  String
-  author    User    @relation(fields: [authorId], references: [id])
+// ============================================
+// EVENT MANAGEMENT MODELS
+// ============================================
+
+model Event {
+  id               String  @id @default(cuid())
+  title            String
+  slug             String  @unique
+  description      String? @db.Text
+  shortDescription String?
+
+  // Date & Time
+  startDate DateTime
+  endDate   DateTime
+  timezone  String   @default("UTC")
+
+  // Location
+  locationType LocationType @default(PHYSICAL)
+  venue        String?
+  address      String?
+  city         String?
+  state        String?
+  country      String?
+  postalCode   String?
+  virtualLink  String?
+
+  // Event Details
+  category   EventCategory
+  tags       String[]
+  capacity   Int?
+  status     EventStatus   @default(DRAFT)
+  visibility Visibility    @default(PUBLIC)
+
+  // Media
+  coverImage String?
+  images     String[]
+
+  // Metadata
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+
+  // Relations
+  organizerId String
+  organizer   User   @relation("OrganizedEvents", fields: [organizerId], references: [id], onDelete: Cascade)
+
+  tickets       Ticket[]
+  registrations Registration[]
+  reviews       Review[]
+  favorites     Favorite[]
+
+  @@index([organizerId])
+  @@index([category])
+  @@index([startDate])
+  @@index([status])
+  @@index([slug])
+}
+
+model Ticket {
+  id      String @id @default(cuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  name        String // e.g., "Early Bird", "VIP", "General Admission"
+  description String?
+  price       Float   @default(0)
+  quantity    Int? // null = unlimited
+  sold        Int     @default(0)
+
+  // Availability
+  salesStart DateTime?
+  salesEnd   DateTime?
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  registrations Registration[]
+
+  @@index([eventId])
+}
+
+model Registration {
+  id      String @id @default(cuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  ticketId String?
+  ticket   Ticket? @relation(fields: [ticketId], references: [id])
+
+  // Registration Details
+  status        RegistrationStatus @default(PENDING)
+  attendeeCount Int                @default(1)
+  totalAmount   Float              @default(0)
+
+  // Additional Info
+  attendeeName    String?
+  attendeeEmail   String?
+  phoneNumber     String?
+  specialRequests String?
+
+  // Check-in
+  checkedIn   Boolean   @default(false)
+  checkedInAt DateTime?
+  qrCode      String?   @unique
+
+  // Metadata
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  cancelledAt DateTime?
+
+  @@unique([eventId, userId])
+  @@index([userId])
+  @@index([eventId])
+  @@index([status])
+}
+
+model Review {
+  id      String @id @default(cuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  rating  Int // 1-5
+  comment String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+}
+
+model Favorite {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, eventId])
+  @@index([userId])
+  @@index([eventId])
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum LocationType {
+  PHYSICAL
+  VIRTUAL
+  HYBRID
+}
+
+enum EventCategory {
+  CONFERENCE
+  WORKSHOP
+  SEMINAR
+  CONCERT
+  FESTIVAL
+  SPORTS
+  EXHIBITION
+  NETWORKING
+  MEETUP
+  WEBINAR
+  OTHER
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+  UNLISTED
+}
+
+enum RegistrationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  WAITLISTED
 }

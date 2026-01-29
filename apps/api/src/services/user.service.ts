@@ -35,16 +35,3 @@ export const updateUser = async (id: string, data: { name?: string; image?: stri
   });
 };
 
-/**
- * Get user with posts
- */
-export const getUserWithPosts = async (id: string) => {
-  return prisma.user.findUnique({
-    where: { id },
-    include: {
-      posts: {
-        orderBy: { id: "desc" },
-      },
-    },
-  });
-};

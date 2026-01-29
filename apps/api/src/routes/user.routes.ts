@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { authMiddleware } from "../middleware/auth.middleware";
 import * as userController from "../controllers/user.controller";
+import * as favoriteController from "../controllers/favorite.controller";
 
 const router = new Hono();
 
@@ -24,5 +25,12 @@ router.get("/:id", userController.getUserById);
  * @access  Private
  */
 router.patch("/me", authMiddleware, userController.updateCurrentUser);
+
+/**
+ * @route   GET /api/users/me/favorites
+ * @desc    Get current user's favorite events
+ * @access  Private
+ */
+router.get("/me/favorites", authMiddleware, favoriteController.getUserFavorites);
 
 export default router;
